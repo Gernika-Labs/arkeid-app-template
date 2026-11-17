@@ -41,7 +41,8 @@ export async function localResponse(role, path, origins) {
     role === "app"
       ? file === "index.html" ||
         /^(src|sdk)\/[a-zA-Z0-9_./-]+\.(js|css)$/.test(file)
-      : /^harness\/[a-zA-Z0-9_-]+\.(js|css)$/.test(file) ||
+      : file === "harness/index.html" ||
+        /^harness\/[a-zA-Z0-9_-]+\.(js|css)$/.test(file) ||
         file === "arcade.manifest.json";
   if (
     !allowed ||

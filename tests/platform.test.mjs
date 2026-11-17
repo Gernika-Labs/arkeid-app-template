@@ -112,6 +112,37 @@ test("the local app cannot serve harness files, secrets or traversal paths", asy
   const config = await localResponse("app", "/sdk/config.js", origins);
   assert.match(config.body, /4173/);
 });
+
+test("the playground root and every startup dependency are served successfully", async () => {
+  const origins = {
+    app: "http://127.0.0.1:4174",
+    platform: "http://127.0.0.1:4173",
+  };
+  const root = await localResponse("platform", "/", origins);
+  assert.equal(root.status, 200);
+  assert.match(root.headers["Content-Type"], /text\/html/);
+  assert.match(String(root.body), /id="app"/);
+  for (const path of [
+    "/harness/style.css",
+    "/harness/platform.js",
+    "/harness/mock-platform.js",
+    "/arcade.manifest.json",
+    "/dev-config.json",
+  ])
+    assert.equal(
+      (await localResponse("platform", path, origins)).status,
+      200,
+      path,
+    );
+  for (const path of [
+    "/",
+    "/src/app.js",
+    "/src/app.css",
+    "/sdk/arcade.js",
+    "/sdk/config.js",
+  ])
+    assert.equal((await localResponse("app", path, origins)).status, 200, path);
+});
 test("sandbox and confirmation controls live in the platform harness, separate from app markup", async () => {
   const harness = await readFile(
     new URL("../harness/index.html", import.meta.url),
