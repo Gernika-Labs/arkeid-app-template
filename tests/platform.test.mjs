@@ -1,0 +1,125 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { MockPlatform } from "../harness/mock-platform.js";
+import { validateManifest, checkProject } from "../scripts/project.mjs";
+import { localResponse, contentPolicy } from "../scripts/server.mjs";
+import { readFile } from "node:fs/promises";
+
+const request = () => ({
+  id: crypto.randomUUID(),
+  source: "Example source passage.",
+});
+
+test("requesting and cancelling a play never spends tokens", () => {
+  const p = new MockPlatform();
+  const r = p.request(request());
+  assert.equal(p.balance, 10000000);
+  assert.equal(p.ledger.length, 0);
+  assert.equal(p.cancel(r.id).status, "cancelled");
+  assert.equal(p.balance, 10000000);
+  assert.equal(p.confirm(r.id).status, "cancelled");
+  assert.equal(p.ledger.length, 0);
+});
+test("each confirmed play charges once and requires a separate confirmation for another play", () => {
+  const p = new MockPlatform();
+  const r = p.request(request());
+  assert.equal(p.confirm(r.id).status, "delivered");
+  assert.equal(p.confirm(r.id).status, "delivered");
+  assert.equal(p.balance, 8500000);
+  assert.equal(p.ledger.length, 1);
+  p.request(request());
+  assert.equal(p.balance, 8500000);
+});
+for (const scenario of ["provider-error", "cost-cap", "moderation"])
+  test(`${scenario} refunds the last play exactly once`, () => {
+    const p = new MockPlatform();
+    const r = p.request(request());
+    assert.equal(p.confirm(r.id, scenario).status, "refunded");
+    p.confirm(r.id, scenario);
+    assert.equal(p.balance, 10000000);
+    assert.deepEqual(
+      p.ledger.map((x) => x.units),
+      [-1500000, 1500000],
+    );
+  });
+test("locked or insufficient wallets cannot spend and concurrent requests cannot skip confirmation", () => {
+  const p = new MockPlatform();
+  p.locked = true;
+  const r = p.request(request());
+  assert.throws(() => p.request(request()), /awaiting confirmation/);
+  assert.equal(p.confirm(r.id).status, "blocked");
+  assert.equal(p.ledger.length, 0);
+  p.locked = false;
+  p.balance = 1;
+  assert.equal(p.confirm(p.request(request()).id).status, "blocked");
+  assert.equal(p.balance, 1);
+});
+test("source limits and unsupported price/capability fields are rejected", () => {
+  const p = new MockPlatform();
+  assert.throws(() => p.request({ ...request(), source: "" }));
+  assert.throws(() => p.request({ ...request(), source: "x".repeat(3001) }));
+  assert.throws(() => p.request({ ...request(), priceUnits: 1 }));
+  assert.throws(() => p.request({ ...request(), capability: "wallet.debit" }));
+});
+
+test("a duplicate request ID cannot replace the source after confirmation", () => {
+  const p = new MockPlatform();
+  const message = request();
+  p.request(message);
+  p.confirm(message.id);
+  assert.throws(
+    () => p.request({ ...message, source: "Different source" }),
+    /different input/,
+  );
+  assert.equal(p.balance, 8500000);
+  assert.equal(p.ledger.length, 1);
+});
+test("starter checks pass without running the app; incompatible manifest changes fail", async () => {
+  const checked = await checkProject();
+  assert.equal(checked.ok, true, checked.errors.join("\n"));
+  assert.ok(checked.files.includes("src/app.js"));
+  assert.ok(
+    validateManifest({ ...checked.manifest, capabilities: ["wallet.debit"] })
+      .length,
+  );
+  assert.ok(
+    validateManifest({ ...checked.manifest, providerKey: "forbidden" }).length,
+  );
+  assert.ok(
+    validateManifest({ ...checked.manifest, callsPerPlay: 100 }).length,
+  );
+});
+test("the local app cannot serve harness files, secrets or traversal paths", async () => {
+  const origins = {
+    app: "http://127.0.0.1:4174",
+    platform: "http://127.0.0.1:4173",
+  };
+  for (const path of [
+    "/harness/platform.js",
+    "/.env",
+    "/src/../harness/platform.js",
+    "/scripts/dev.mjs",
+    "/arcade.manifest.json",
+  ])
+    assert.equal((await localResponse("app", path, origins)).status, 404);
+  const index = await localResponse("app", "/", origins);
+  assert.equal(index.status, 200);
+  assert.match(contentPolicy("app", origins), /connect-src 'none'/);
+  assert.match(
+    contentPolicy("app", origins),
+    /frame-ancestors http:\/\/127.0.0.1:4173/,
+  );
+  const config = await localResponse("app", "/sdk/config.js", origins);
+  assert.match(config.body, /4173/);
+});
+test("sandbox and confirmation controls live in the platform harness, separate from app markup", async () => {
+  const harness = await readFile(
+    new URL("../harness/index.html", import.meta.url),
+    "utf8",
+  );
+  assert.match(harness, /sandbox="allow-scripts"/);
+  assert.doesNotMatch(harness, /allow-same-origin/);
+  assert.match(harness, /id="confirmation"/);
+  const app = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.doesNotMatch(app, /id="confirmation"|id="wallet-button"/);
+});

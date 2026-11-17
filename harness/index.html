@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ARKEID local creator playground</title>
+    <link rel="stylesheet" href="/harness/style.css" />
+    <script type="module" src="/harness/platform.js"></script>
+  </head>
+  <body>
+    <header class="toolbar">
+      <strong>ARKEID · Creator playground</strong
+      ><span class="demo">LOCAL MOCK · No keys · No charges</span
+      ><button
+        id="controls-toggle"
+        aria-expanded="false"
+        aria-controls="controls"
+      >
+        Test controls
+      </button>
+    </header>
+    <section id="controls" class="controls" hidden>
+      <label
+        >Next confirmed play<select id="scenario">
+          <option value="success">Successful delivery</option>
+          <option value="provider-error">Provider fails → refund</option>
+          <option value="cost-cap">Cost cap → refund</option>
+          <option value="moderation">Moderation rejects → refund</option>
+        </select></label
+      ><label><input id="locked" type="checkbox" /> Lock mock wallet</label>
+      <p>
+        These controls belong to the platform simulator. The app cannot set
+        price, balance, test outcome or consent. This is not a production
+        security or financial test.
+      </p>
+    </section>
+    <iframe
+      id="app"
+      title="Your custom app"
+      sandbox="allow-scripts"
+      allow="
+        camera 'none';
+        microphone 'none';
+        geolocation 'none';
+        payment 'none';
+        clipboard-read 'none';
+        clipboard-write 'none';
+      "
+      referrerpolicy="no-referrer"
+    ></iframe>
+    <button class="wallet-bubble" id="wallet-button">10 tokens · Wallet</button>
+    <dialog id="wallet">
+      <h2>Local mock wallet</h2>
+      <p id="balance"></p>
+      <p>
+        Simulated store credit only. No bank, provider or ARKEID account is
+        connected.
+      </p>
+      <h3>Activity</h3>
+      <ul id="ledger"></ul>
+      <button id="download" disabled>Download latest result</button
+      ><button id="wallet-close">Back to app</button>
+    </dialog>
+    <dialog id="confirmation">
+      <p class="platform-label">ARKEID PAYMENT CONFIRMATION · LOCAL MOCK</p>
+      <h2>Confirm your play</h2>
+      <p id="app-name"></p>
+      <p class="price" id="price"></p>
+      <p>One confirmation buys one play. No automatic continuation.</p>
+      <p id="source-preview"></p>
+      <button id="confirm">Confirm</button
+      ><button id="cancel">Cancel · No charge</button>
+    </dialog>
+    <p id="status" role="status"></p>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "contract": "arkeid.custom-app.dev.v1",
+  "id": "research-workspace",
+  "version": 1,
+  "title": "Research workspace",
+  "description": "A customizable research dashboard with a locally simulated AI explanation action.",
+  "entry": "index.html",
+  "capabilities": ["ai.generate"],
+  "inputMaxCharacters": 3000,
+  "callsPerPlay": 1,
+  "proposedPriceUnits": 1500000,
+  "network": "platform-bridge-only"
+}

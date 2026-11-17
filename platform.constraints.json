@@ -1,0 +1,35 @@
+{
+  "contract": "arkeid.custom-app.dev.v1",
+  "guidanceOnly": true,
+  "authority": "Local harness for simulation; eventual ARKEID server policy and review for publication",
+  "runtime": "custom frontend inside sandboxed iframe",
+  "customize": ["index.html", "src/app.js", "src/app.css"],
+  "allowedCapabilities": ["ai.generate"],
+  "paymentAuthority": "platform only, explicit confirmation for each play",
+  "limits": {
+    "inputCharacters": 3000,
+    "callsPerPlay": 1,
+    "appFiles": 150,
+    "fileBytes": 250000,
+    "totalBytes": 2000000
+  },
+  "forbidden": [
+    "provider secrets",
+    "direct network",
+    "backend execution",
+    "wallet credentials",
+    "automatic charges",
+    "unapproved capabilities",
+    "gambling",
+    "weakening sandbox/CSP",
+    "claiming mock data is live"
+  ],
+  "commands": {
+    "dev": "npm run dev",
+    "check": "npm run check",
+    "test": "npm test",
+    "build": "npm run build"
+  },
+  "productionPublisherSupported": false,
+  "approvalGuaranteed": false
+}
