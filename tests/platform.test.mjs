@@ -77,7 +77,8 @@ test("a duplicate request ID cannot replace the source after confirmation", () =
 test("starter checks pass without running the app; incompatible manifest changes fail", async () => {
   const checked = await checkProject();
   assert.equal(checked.ok, true, checked.errors.join("\n"));
-  assert.ok(checked.files.includes("src/app.js"));
+  assert.ok(checked.files.includes("src/App.tsx"));
+  assert.ok(checked.files.includes("src/components/ui/button.tsx"));
   assert.ok(
     validateManifest({ ...checked.manifest, capabilities: ["wallet.debit"] })
       .length,
@@ -88,6 +89,36 @@ test("starter checks pass without running the app; incompatible manifest changes
   assert.ok(
     validateManifest({ ...checked.manifest, callsPerPlay: 100 }).length,
   );
+});
+
+test("the starter is a neutral typed React foundation with shared UI and tokens", async () => {
+  const app = await readFile(
+    new URL("../src/App.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(app, /Welcome to Arkeid/);
+  assert.doesNotMatch(
+    app,
+    /watchlist|NOVA|ORBT|PINE|filing|Research workspace/i,
+  );
+  assert.match(app, /components\/ui\/button/);
+  const css = await readFile(
+    new URL("../src/styles/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(css, /@import "tailwindcss"/);
+  assert.match(css, /tokens.css/);
+  const tokens = await readFile(
+    new URL("../src/styles/tokens.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(tokens, /--primary:/);
+  assert.match(tokens, /\.dark/);
+  const ts = JSON.parse(
+    await readFile(new URL("../tsconfig.json", import.meta.url), "utf8"),
+  );
+  assert.equal(ts.compilerOptions.strict, true);
+  assert.equal(ts.compilerOptions.jsx, "react-jsx");
 });
 test("the local app cannot serve harness files, secrets or traversal paths", async () => {
   const origins = {
@@ -134,13 +165,14 @@ test("the playground root and every startup dependency are served successfully",
       200,
       path,
     );
-  for (const path of [
-    "/",
-    "/src/app.js",
-    "/src/app.css",
-    "/sdk/arcade.js",
-    "/sdk/config.js",
-  ])
+  const appIndex = await localResponse("app", "/", origins);
+  assert.equal(appIndex.status, 200);
+  assert.match(String(appIndex.body), /Welcome to Arkeid/);
+  const assets = [
+    ...String(appIndex.body).matchAll(/(?:src|href)="(\/assets\/[^\"]+)"/g),
+  ].map((match) => match[1]);
+  assert.ok(assets.length >= 2, "built script and stylesheet must be linked");
+  for (const path of [...assets, "/sdk/config.js"])
     assert.equal((await localResponse("app", path, origins)).status, 200, path);
 });
 test("sandbox and confirmation controls live in the platform harness, separate from app markup", async () => {

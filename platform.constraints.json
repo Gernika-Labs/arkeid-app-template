@@ -3,7 +3,12 @@
   "guidanceOnly": true,
   "authority": "Local harness for simulation; eventual ARKEID server policy and review for publication",
   "runtime": "custom frontend inside sandboxed iframe",
-  "customize": ["index.html", "src/app.js", "src/app.css"],
+  "customize": [
+    "src/App.tsx",
+    "src/components/",
+    "src/styles/tokens.css",
+    "src/styles/globals.css"
+  ],
   "allowedCapabilities": ["ai.generate"],
   "paymentAuthority": "platform only, explicit confirmation for each play",
   "limits": {
@@ -31,5 +36,12 @@
     "build": "npm run build"
   },
   "productionPublisherSupported": false,
-  "approvalGuaranteed": false
+  "approvalGuaranteed": false,
+  "stack": [
+    "React",
+    "TypeScript",
+    "Vite",
+    "Tailwind CSS v4",
+    "shadcn source-owned components"
+  ]
 }

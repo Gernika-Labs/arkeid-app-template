@@ -81,7 +81,10 @@ export async function projectFiles(root = ROOT) {
       if (entry.isSymbolicLink())
         throw new Error(`Symlinks are not supported: ${path}`);
       if (entry.isDirectory()) await walk(path);
-      else if (entry.isFile() && [".js", ".css"].includes(extname(name)))
+      else if (
+        entry.isFile() &&
+        [".js", ".ts", ".tsx", ".css"].includes(extname(name))
+      )
         files.push(path);
       else throw new Error(`Unsupported app file: ${path}`);
       if (files.length > 150) throw new Error("Maximum 150 app files");
@@ -119,7 +122,7 @@ export async function checkProject(root = ROOT) {
           `JavaScript syntax error in ${file}: ${parsed.stderr?.trim() || "could not check syntax"}`,
         );
     }
-    if (file.startsWith("src/") && file.endsWith(".js")) {
+    if (file.startsWith("src/") && /\.(js|ts|tsx)$/.test(file)) {
       if (
         /\b(fetch|XMLHttpRequest|WebSocket|EventSource|eval|Function)\s*\(|document\s*\.\s*cookie|\b(?:localStorage|sessionStorage)\b|\bparent\s*\.\s*postMessage/.test(
           source,

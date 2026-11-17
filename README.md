@@ -1,66 +1,85 @@
-# Runnable ARKEID custom-app starter
+# Arkeid app template
 
-Build and test your own interface locally, including dashboards, navigation, charts and interactions. This is a standalone, zero-dependency JavaScript project using native browser modules and Node's built-in tools. You do not need the ARKEID monorepo, an API key or a payment account to run a copy.
+A clean React + TypeScript starter for building your own Arkeid app. It opens with **Welcome to Arkeid** and a short setup guide. There is no example product, sample dashboard or business logic to delete.
 
-## Run it
+Included: Vite, strict TypeScript, Tailwind CSS v4, source-owned shadcn-style components, shared light/dark design tokens, the typed Arkeid SDK, platform manifest, AI instructions and a separate local mock platform.
 
-Requires Node 22.12 or newer. From this directory:
+## Start locally
+
+Requires Node **22.12+**. Use this repository as a GitHub template or clone it:
 
 ```sh
+git clone https://github.com/Gernika-Labs/arkeid-app-template.git
+cd arkeid-app-template
+npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:4173**. No installation is needed because this starter has no dependencies. The app itself is served on port 4174 in a sandboxed frame; always open the playground at 4173 to use the SDK. Both servers bind only to loopback.
+Open **http://127.0.0.1:4173**. Your app is compiled by Vite and shown on port 4174 inside a sandboxed frame. The parent playground owns the floating wallet and mock payment confirmation. Both servers bind only to loopback. Opening localhost redirects to the canonical address.
 
-From the ARKEID monorepo root, `pnpm creator:dev` starts the same playground. If either port is occupied, choose another adjacent pair:
+Vite watches your source files and rebuilds on changes; the playground reloads the app after a successful build. This deliberately uses compiled assets rather than injecting Vite's development client into the sandbox. A reload resets app state; the mock wallet stays until the parent playground is refreshed. Ctrl+C stops both servers and the watcher.
+
+If ports 4173/4174 are occupied:
 
 ```sh
 ARKEID_DEV_PORT=4273 npm run dev
 ```
 
-Edit `src/app.js`, `src/app.css` and `index.html`, then refresh the browser. Files are served directly; there is no bundler or hot-module reload. Refreshing the playground resets the in-memory demo wallet and all app data. Ctrl+C stops both servers. You can later introduce your preferred frontend tooling, but changing the build system will require adapting the checker and eventual hosting contract; it is not supported automatically by this starter.
+From the Arkeid monorepo, install this starter's dependencies with `npm --prefix starters/custom-app ci`, then run `pnpm creator:dev`.
 
-## What to try
+## Build your app
 
-1. Search/select fictional companies in the watchlist, change chart periods and switch between explanation and notes tabs.
-2. Click **Explain excerpt**. The app calls `arcade.ai.generate({ source })` through the SDK.
-3. The separate ARKEID harness shows the task and exact mock token price. Cancel or press Escape: nothing is spent.
-4. Confirm: the mock wallet debits once and the app receives an explicitly labeled sample result. Open the floating wallet to inspect activity or download the result.
-5. Request another explanation: it requires another explicit confirmation.
-6. Open **Test controls** and simulate provider failure, moderation rejection or cost-cap failure. Each confirmed failed play refunds once. Try a locked wallet and insufficient balance (spend the initial 10 demo tokens).
+| File                     | Start here                                                                  |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `src/App.tsx`            | Replace the welcome page with your own interface                            |
+| `src/styles/tokens.css`  | Global colors, light/dark semantics, typography and radius                  |
+| `src/styles/globals.css` | Tailwind imports, theme mappings and base styles                            |
+| `src/components/ui/`     | Reusable Button and Card components following shadcn's source-owned pattern |
+| `src/lib/utils.ts`       | Shared `cn()` class composition helper                                      |
+| `components.json`        | shadcn CLI configuration and `@/` aliases                                   |
+| `sdk/arcade.ts`          | Typed platform bridge; no provider or wallet credentials                    |
+| `arcade.manifest.json`   | App identity, capability and resource limits                                |
+| `harness/`               | Local platform simulator; not part of your app design                       |
 
-No models, market feeds, Stripe accounts, real tokens or ARKEID servers are connected. Sample companies, prices and charts are fictional. This is not a port of Kuantu or an investment tool.
+Add UI components as needed using the configured shadcn CLI:
 
-## Files you customize
+```sh
+npx shadcn@latest add input textarea dialog
+```
 
-| File                   | Purpose                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `index.html`           | Your complete app structure, navigation and panels                                                           |
-| `src/app.js`           | Your interface behavior; call the SDK for platform capabilities                                              |
-| `src/app.css`          | Your design, responsive layout, colors and typography                                                        |
-| `arcade.manifest.json` | Identity, development contract, allowed capability, input/call limits and proposed mock price                |
-| `sdk/arcade.js`        | Typed-by-convention local message bridge; no wallet or provider credentials                                  |
-| `harness/`             | Platform simulation, wallet, confirmation and failure scenarios; not creator UI or production infrastructure |
+Use semantic classes such as `bg-background`, `text-foreground`, `bg-primary` and `text-muted-foreground` so components share the global tokens. The `.dark` token set is included; add your own theme toggle if your app needs one. There is no external font request or opinionated product layout.
 
-Unlike the simpler recipe-theme starter, this starter allows your own frontend JavaScript. The current capability is `ai.generate`; arbitrary network access, provider keys, payment authorization, server execution and persistent storage are outside this initial local contract. Use system fonts and CSS/DOM visuals; external fonts/images and packages are not enabled in the default harness.
+## Use platform features when you need them
 
-## Check, test and package
+The welcome page makes no AI calls and does not request a play. Add the SDK to your own action:
+
+```ts
+import { arcade } from "../sdk/arcade";
+
+const result = await arcade.ai.generate({ source: "Your task input" });
+// Render result.text using React text content.
+```
+
+The local SDK requests a play from the parent. Only the separate Arkeid confirmation authorizes the mock debit. Cancellation spends nothing; every additional play requires a new confirmation. **Test controls** in the parent simulate successful delivery, provider failure, moderation rejection, cost-cap failure and a locked wallet. The wallet shows its activity and can download a delivered result.
+
+No API keys, real AI, payment account or Arkeid backend are connected. All tokens, results and failures are simulated. The SDK currently supports `ai.generate` with at most 3,000 source characters and one call per confirmed play. Arbitrary networking, provider keys, wallet access and backend execution are not capabilities of this starter.
+
+## Validate and package
 
 ```sh
 npm run check
-npm run check -- --json
 npm test
 npm run build
 ```
 
-The checker validates the manifest, file bounds, symlinks and JS syntax, and flags obvious forbidden API usage or possible provider keys. Pattern checks are incomplete and are not a security certification. It does not execute creator app code while checking. Tests cover the mock consent/debit/refund flow, isolation headers and static serving restrictions; browser verification remains necessary.
+`check` runs TypeScript and contract checks. Tests build the app and cover mock consent/debits/refunds plus startup routes and isolation headers. `build` typechecks, bundles React/Tailwind with Vite and records SHA-256 hashes in `dist/bundle.manifest.json`. It does not deploy or publish. Browser verification is still required; pattern checks cannot certify arbitrary JavaScript security.
 
-Build copies the permitted source files to `dist/` and records SHA-256 hashes in `dist/bundle.manifest.json`. It never deploys, registers or publishes an app. **This is `arkeid.custom-app.dev.v1`, a local development contract. The current marketplace publisher accepts recipe manifests, not this custom-app bundle yet.** Production hosting, review and a server-backed SDK adapter must be implemented and verified before publication. Do not upload this bundle as a recipe or replace mock balances with real money logic.
+This is **arkeid.custom-app.dev.v1**, a local development contract. The current marketplace publisher accepts recipes, not custom-app bundles yet. Production hosting, review and a server-backed SDK adapter remain separate work. Never replace the mock ledger with real payment logic.
 
-## Working with Claude Code or another agent
+## Working with AI coding tools
 
-Open this directory in your coding tool. AGENTS.md, CLAUDE.md and platform.constraints.json explain the boundaries. Example:
+AGENTS.md, CLAUDE.md and platform.constraints.json describe the platform boundary. Example instruction:
 
-> Keep ARKEID's SDK and consent boundary. Adapt the app in src/ and index.html to the attached design, preserving its layout and interactions. Explain which parts are mock data and which need unsupported platform capabilities. Run check, test and build. Do not add provider keys, direct network calls or payment logic, and do not deploy.
+> Read the repository instructions. Build my app in React and TypeScript from the attached design. Reuse the shadcn components and global tokens. Keep wallet, payment and provider credentials out of the app. Use only declared SDK capabilities. Run check, test and build, and report unsupported requirements instead of bypassing restrictions. Do not deploy.
 
-Design exports, screenshots, PDFs and Markdown can serve as implementation references for that coding agent. This starter does not itself import or interpret those formats, and the in-app paid AI design builder is separate unfinished work.
+Screenshots, HTML exports, PDFs, Markdown and briefs can guide your coding agent. This starter does not itself interpret design files; in-app paid AI generation remains separate unfinished work.

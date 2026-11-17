@@ -138,4 +138,22 @@ byId("download").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 frame.src = config.appOrigin;
+let revision = config.revision;
+setInterval(async () => {
+  try {
+    const current = await (
+      await fetch("/dev-config.json", { cache: "no-store" })
+    ).json();
+    if (current.revision && current.revision !== revision) {
+      revision = current.revision;
+      if (platform.pending) {
+        platform.cancel(platform.pending);
+        byId("confirmation").close();
+      }
+      frame.src = config.appOrigin;
+    }
+  } catch {
+    /* Keep the current app visible while the dev server rebuilds. */
+  }
+}, 1000);
 update();

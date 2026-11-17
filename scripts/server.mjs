@@ -29,7 +29,14 @@ export async function localResponse(role, path, origins) {
     return {
       status: 200,
       headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ appOrigin: origins.app }),
+      body: JSON.stringify({
+        appOrigin: origins.app,
+        revision: (
+          await lstat(join(ROOT, "dist/index.html")).catch(() => ({
+            mtimeMs: 0,
+          }))
+        ).mtimeMs,
+      }),
     };
   const file =
     role === "platform" && path === "/"
@@ -40,7 +47,7 @@ export async function localResponse(role, path, origins) {
   const allowed =
     role === "app"
       ? file === "index.html" ||
-        /^(src|sdk)\/[a-zA-Z0-9_./-]+\.(js|css)$/.test(file)
+        /^assets\/[a-zA-Z0-9_./-]+\.(js|css)$/.test(file)
       : file === "harness/index.html" ||
         /^harness\/[a-zA-Z0-9_-]+\.(js|css)$/.test(file) ||
         file === "arcade.manifest.json";
@@ -55,7 +62,8 @@ export async function localResponse(role, path, origins) {
   )
     return { status: 404, headers, body: "Not found" };
   try {
-    let current = ROOT;
+    let current = role === "app" ? join(ROOT, "dist") : ROOT;
+    if ((await lstat(current)).isSymbolicLink()) throw new Error("Symlink");
     for (const part of file.split("/")) {
       current = join(current, part);
       if ((await lstat(current)).isSymbolicLink()) throw new Error("Symlink");

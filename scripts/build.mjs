@@ -1,43 +1,40 @@
-import { mkdir, copyFile, writeFile, lstat } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import {
+  writeFile,
+  readdir,
+  lstat,
+  readFile,
+  copyFile,
+} from "node:fs/promises";
+import { join } from "node:path";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import { ROOT, checkProject } from "./project.mjs";
-
-async function directory(path) {
-  const old = await lstat(path).catch(() => null);
-  if (old && (!old.isDirectory() || old.isSymbolicLink()))
-    throw new Error(`Unsafe output directory: ${path}`);
-  await mkdir(path, { recursive: true });
-}
+import { compileApp } from "./compile.mjs";
 try {
   const result = await checkProject();
   if (!result.ok) throw new Error(result.errors.join("\n"));
+  await compileApp();
   const out = join(ROOT, "dist");
-  await directory(out);
+  await copyFile(
+    join(ROOT, "arcade.manifest.json"),
+    join(out, "arcade.manifest.json"),
+  );
   const hashes = {};
-  for (const file of result.files) {
-    const parts = dirname(file)
-      .split("/")
-      .filter((p) => p !== ".");
-    let targetDir = out;
-    for (const part of parts) {
-      targetDir = join(targetDir, part);
-      await directory(targetDir);
+  async function walk(dir, prefix = "") {
+    for (const name of await readdir(dir)) {
+      const file = join(dir, name);
+      const stat = await lstat(file);
+      if (stat.isSymbolicLink())
+        throw new Error("Build output cannot contain symlinks");
+      if (stat.isDirectory()) await walk(file, prefix + name + "/");
+      else
+        hashes[prefix + name] = createHash("sha256")
+          .update(await readFile(file))
+          .digest("hex");
     }
-    const target = join(out, file);
-    if ((await lstat(target).catch(() => null))?.isSymbolicLink())
-      throw new Error(`Unsafe output file: ${file}`);
-    await copyFile(join(ROOT, file), target);
-    hashes[file] = createHash("sha256")
-      .update(await readFile(target))
-      .digest("hex");
   }
-  const bundlePath = join(out, "bundle.manifest.json");
-  if ((await lstat(bundlePath).catch(() => null))?.isSymbolicLink())
-    throw new Error("Unsafe bundle manifest path");
+  await walk(out);
   await writeFile(
-    bundlePath,
+    join(out, "bundle.manifest.json"),
     JSON.stringify(
       {
         contract: result.manifest.contract,
@@ -45,14 +42,14 @@ try {
         version: result.manifest.version,
         files: hashes,
         publishable: false,
-        note: "Local custom-app prototype. Production hosting, review and server-backed SDK integration remain required.",
+        note: "Custom-app development artifact. Production hosting, review and server-backed SDK integration remain required.",
       },
       null,
       2,
     ) + "\n",
   );
   console.log(
-    "Built local custom-app artifact in dist/. File hashes are recorded; no deployment or publication was performed.",
+    "Built React/TypeScript app in dist/. No deployment or publication was performed.",
   );
 } catch (error) {
   console.error(error.message);

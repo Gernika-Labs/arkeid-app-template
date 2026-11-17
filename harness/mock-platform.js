@@ -90,7 +90,7 @@ export class MockPlatform {
       request.error = `Simulated ${scenario}. Your demo tokens were returned.`;
     } else {
       request.status = "delivered";
-      request.text = `LOCAL MOCK RESULT — no model was called.\n\nThe app submitted this source:\n“${request.source.slice(0, 240)}”\n\nReplace the sample interface and task with your own. This text tests delivery only; it is not a financial explanation or advice.`;
+      request.text = `LOCAL MOCK RESULT — no model was called.\n\nThe app submitted this source:\n“${request.source.slice(0, 240)}”\n\nReplace the sample interface and task with your own. This text tests delivery only; it is not output from a real AI model.`;
     }
     this.pending = null;
     return request;

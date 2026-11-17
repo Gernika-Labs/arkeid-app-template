@@ -1,9 +1,9 @@
 {
   "contract": "arkeid.custom-app.dev.v1",
-  "id": "research-workspace",
+  "id": "my-arkeid-app",
   "version": 1,
-  "title": "Research workspace",
-  "description": "A customizable research dashboard with a locally simulated AI explanation action.",
+  "title": "My Arkeid app",
+  "description": "A new app built with the Arkeid React and TypeScript starter.",
   "entry": "index.html",
   "capabilities": ["ai.generate"],
   "inputMaxCharacters": 3000,
