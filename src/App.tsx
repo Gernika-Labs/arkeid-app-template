@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProjectDiscovery } from "@/components/project-discovery";
 export default function App() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center px-6 py-16 sm:px-10">
@@ -57,6 +58,7 @@ export default function App() {
               <code>npm run build</code>.
             </li>
           </ol>
+          <ProjectDiscovery />
         </CardContent>
       </Card>
     </main>

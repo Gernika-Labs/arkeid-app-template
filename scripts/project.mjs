@@ -83,7 +83,7 @@ export async function projectFiles(root = ROOT) {
       if (entry.isDirectory()) await walk(path);
       else if (
         entry.isFile() &&
-        [".js", ".ts", ".tsx", ".css"].includes(extname(name))
+        [".js", ".ts", ".tsx", ".css", ".json"].includes(extname(name))
       )
         files.push(path);
       else throw new Error(`Unsupported app file: ${path}`);
