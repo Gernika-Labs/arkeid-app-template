@@ -4,10 +4,46 @@ import { MockPlatform } from "../harness/mock-platform.js";
 import { validateManifest, checkProject } from "../scripts/project.mjs";
 import { localResponse, contentPolicy } from "../scripts/server.mjs";
 import { readFile } from "node:fs/promises";
+import {
+  normalizeCorner,
+  nearestCorner,
+  clampDockPosition,
+} from "../harness/tool-position.js";
 
 const request = () => ({
   id: crypto.randomUUID(),
   source: "Example source passage.",
+});
+
+test("tools snap to all four corners using viewport coordinates", () => {
+  assert.equal(nearestCorner(20, 20, 1200, 800), "top-left");
+  assert.equal(nearestCorner(1180, 20, 1200, 800), "top-right");
+  assert.equal(nearestCorner(20, 780, 1200, 800), "bottom-left");
+  assert.equal(nearestCorner(1180, 780, 1200, 800), "bottom-right");
+  assert.equal(nearestCorner(370, 800, 390, 844), "bottom-right");
+});
+test("dragged tools stay within viewport bounds", () => {
+  assert.deepEqual(clampDockPosition(-100, -100, 180, 46, 390, 844), {
+    left: 16,
+    top: 16,
+  });
+  assert.deepEqual(clampDockPosition(1000, 1000, 180, 46, 390, 844), {
+    left: 194,
+    top: 782,
+  });
+});
+test("stored tools preferences accept only supported corners", () => {
+  for (const value of [
+    null,
+    undefined,
+    "",
+    "middle",
+    "top:0",
+    { corner: "top-left" },
+  ])
+    assert.equal(normalizeCorner(value), "bottom-right");
+  for (const value of ["top-left", "top-right", "bottom-left", "bottom-right"])
+    assert.equal(normalizeCorner(value), value);
 });
 
 test("requesting and cancelling a play never spends tokens", () => {
@@ -157,6 +193,8 @@ test("the playground root and every startup dependency are served successfully",
     "/harness/style.css",
     "/harness/platform.js",
     "/harness/mock-platform.js",
+    "/harness/tools.js",
+    "/harness/tool-position.js",
     "/arcade.manifest.json",
     "/dev-config.json",
   ])

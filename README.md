@@ -17,6 +17,8 @@ npm run dev
 
 Open **http://127.0.0.1:4173**. Your app is compiled by Vite and shown on port 4174 inside a sandboxed frame. The parent playground owns the floating wallet and mock payment confirmation. Both servers bind only to loopback. Opening localhost redirects to the canonical address.
 
+The playground uses the full viewport. A short local-mock notice appears on entry and fades after four seconds. Open the small tools icon for test controls. Drag that icon to snap the tools/wallet dock to any corner, or use **Tools position** in the panel; only that UI preference is stored in the parent playground’s local storage. The app cannot read it. Escape closes the tools panel, and motion preferences are respected.
+
 Vite watches your source files and rebuilds on changes; the playground reloads the app after a successful build. This deliberately uses compiled assets rather than injecting Vite's development client into the sandbox. A reload resets app state; the mock wallet stays until the parent playground is refreshed. Ctrl+C stops both servers and the watcher.
 
 If ports 4173/4174 are occupied:

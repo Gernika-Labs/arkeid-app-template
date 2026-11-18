@@ -1,4 +1,7 @@
 import { MockPlatform, UNIT } from "./mock-platform.js";
+import { setupPlaygroundTools } from "./tools.js";
+
+setupPlaygroundTools();
 
 const byId = (id) => document.getElementById(id);
 const manifest = await (await fetch("/arcade.manifest.json")).json();
@@ -119,13 +122,6 @@ byId("wallet-button").addEventListener("click", () => {
 byId("wallet-close").addEventListener("click", () => byId("wallet").close());
 byId("locked").addEventListener("change", () => {
   platform.locked = byId("locked").checked;
-});
-byId("controls-toggle").addEventListener("click", () => {
-  byId("controls").hidden = !byId("controls").hidden;
-  byId("controls-toggle").setAttribute(
-    "aria-expanded",
-    String(!byId("controls").hidden),
-  );
 });
 byId("download").addEventListener("click", () => {
   const url = URL.createObjectURL(

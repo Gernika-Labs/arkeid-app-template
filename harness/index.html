@@ -8,18 +8,36 @@
     <script type="module" src="/harness/platform.js"></script>
   </head>
   <body>
-    <header class="toolbar">
-      <strong>ARKEID · Creator playground</strong
-      ><span class="demo">LOCAL MOCK · No keys · No charges</span
-      ><button
-        id="controls-toggle"
-        aria-expanded="false"
-        aria-controls="controls"
-      >
-        Test controls
+    <aside
+      id="intro-notice"
+      class="intro-notice"
+      aria-label="Local playground information"
+    >
+      <div>
+        <strong>ARKEID · Creator playground</strong
+        ><span class="demo">Local mock · No keys · No charges</span
+        ><small
+          >Drag the tools button to any corner. Open it for test
+          controls.</small
+        >
+      </div>
+      <button id="intro-dismiss" aria-label="Dismiss playground information">
+        ×
       </button>
-    </header>
-    <section id="controls" class="controls" hidden>
+    </aside>
+    <section
+      id="controls"
+      class="controls"
+      aria-label="Playground tools"
+      hidden
+    >
+      <div class="tools-heading">
+        <strong>Playground tools</strong
+        ><button id="controls-close" aria-label="Close playground tools">
+          ×
+        </button>
+      </div>
+      <p class="demo">Local mock · No keys · No charges</p>
       <label
         >Next confirmed play<select id="scenario">
           <option value="success">Successful delivery</option>
@@ -32,6 +50,17 @@
         These controls belong to the platform simulator. The app cannot set
         price, balance, test outcome or consent. This is not a production
         security or financial test.
+      </p>
+      <label for="tools-corner">Tools position</label
+      ><select id="tools-corner">
+        <option value="top-left">Top left</option>
+        <option value="top-right">Top right</option>
+        <option value="bottom-left">Bottom left</option>
+        <option value="bottom-right" selected>Bottom right</option>
+      </select>
+      <p>
+        Drag the tools button to a corner, or choose a position above. Your
+        preference is saved in this browser.
       </p>
     </section>
     <iframe
@@ -48,7 +77,33 @@
       "
       referrerpolicy="no-referrer"
     ></iframe>
-    <button class="wallet-bubble" id="wallet-button">10 tokens · Wallet</button>
+    <div id="tool-dock" class="tool-dock" data-corner="bottom-right">
+      <button
+        id="controls-toggle"
+        class="tools-bubble"
+        aria-label="Open playground tools. Drag to move."
+        aria-expanded="false"
+        aria-controls="controls"
+        title="Playground tools · Drag to any corner"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          aria-hidden="true"
+        >
+          <path d="M4 7h16M4 17h16" />
+          <circle cx="9" cy="7" r="3" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="17" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
+      <button class="wallet-bubble" id="wallet-button">
+        10 tokens · Wallet
+      </button>
+    </div>
     <dialog id="wallet">
       <h2>Local mock wallet</h2>
       <p id="balance"></p>
