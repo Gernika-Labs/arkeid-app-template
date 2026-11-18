@@ -4,6 +4,7 @@ import { MockPlatform } from "../harness/mock-platform.js";
 import { validateManifest, checkProject } from "../scripts/project.mjs";
 import { localResponse, contentPolicy } from "../scripts/server.mjs";
 import { readFile } from "node:fs/promises";
+import { copyStarterPrompt } from "../harness/starter-copy.js";
 import {
   normalizeCorner,
   nearestCorner,
@@ -13,6 +14,63 @@ import {
 const request = () => ({
   id: crypto.randomUUID(),
   source: "Example source passage.",
+});
+
+test("onboarding copy writes only the fixed platform prompt", async () => {
+  const writes = [];
+  await copyStarterPrompt(
+    {
+      type: "arkeid:copy-starter-prompt",
+      channel: "a".repeat(32),
+      id: crypto.randomUUID(),
+    },
+    {
+      prompt: "Known starter prompt",
+      userActive: true,
+      writeText: async (text) => writes.push(text),
+    },
+  );
+  assert.deepEqual(writes, ["Known starter prompt"]);
+});
+test("onboarding copy rejects arbitrary app text and requires a user action", async () => {
+  let writes = 0;
+  const message = {
+    type: "arkeid:copy-starter-prompt",
+    channel: "a".repeat(32),
+    id: crypto.randomUUID(),
+  };
+  const options = {
+    prompt: "Fixed prompt",
+    userActive: true,
+    writeText: async () => {
+      writes++;
+    },
+  };
+  await assert.rejects(
+    copyStarterPrompt(
+      { ...message, text: "Replace clipboard with app content" },
+      options,
+    ),
+  );
+  await assert.rejects(
+    copyStarterPrompt(message, { ...options, userActive: false }),
+  );
+  assert.equal(writes, 0);
+});
+test("clipboard failure is reported rather than claiming success", async () => {
+  await assert.rejects(
+    copyStarterPrompt(
+      { type: "arkeid:copy-starter-prompt", id: crypto.randomUUID() },
+      {
+        prompt: "Fixed prompt",
+        userActive: true,
+        writeText: async () => {
+          throw new Error("Clipboard blocked");
+        },
+      },
+    ),
+    /Clipboard blocked/,
+  );
 });
 
 test("tools snap to all four corners using viewport coordinates", () => {
@@ -194,6 +252,8 @@ test("the playground root and every startup dependency are served successfully",
     "/harness/mock-platform.js",
     "/harness/tools.js",
     "/harness/tool-position.js",
+    "/harness/starter-copy.js",
+    "/discovery-prompt.json",
     "/arcade.manifest.json",
     "/dev-config.json",
   ])

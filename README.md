@@ -33,6 +33,8 @@ From the Arkeid monorepo, install this starter's dependencies with `npm --prefix
 
 Copy the [Help me shape my app prompt](START_HERE.md) into Claude Code or your preferred AI coding assistant with this project open. It asks one question at a time, helps define the smallest useful app, and asks you to confirm a project brief before building. The same prompt is available under **Need a starting point?** on the welcome page and in Arkeid’s creator dashboard. Copying is free and makes no AI call in Arkeid; your coding assistant’s usage terms apply.
 
+The welcome page’s **Copy prompt** button uses the parent playground to copy only this fixed onboarding prompt. It does not grant the app general clipboard access. If the browser blocks copying, the text is selected for keyboard copying instead.
+
 ## Build your app
 
 | File                     | Start here                                                                  |

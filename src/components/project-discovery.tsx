@@ -1,11 +1,14 @@
 import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import discovery from "@/content/project-discovery-prompt.json";
+import { copyDiscoveryPrompt } from "../../sdk/arcade";
 
 export function ProjectDiscovery() {
   const id = useId();
   const field = useRef<HTMLTextAreaElement>(null);
-  const [selected, setSelected] = useState(false);
+  const [status, setStatus] = useState<
+    "idle" | "copying" | "copied" | "fallback"
+  >("idle");
   return (
     <details className="rounded-lg border p-4">
       <summary className="cursor-pointer text-sm font-medium">
@@ -29,18 +32,31 @@ export function ProjectDiscovery() {
       <Button
         className="mt-3"
         variant="outline"
-        onClick={() => {
-          field.current?.focus();
-          field.current?.select();
-          setSelected(true);
+        disabled={status === "copying"}
+        onClick={async () => {
+          setStatus("copying");
+          try {
+            await copyDiscoveryPrompt();
+            setStatus("copied");
+          } catch {
+            field.current?.focus();
+            field.current?.select();
+            setStatus("fallback");
+          }
         }}
       >
-        Select prompt to copy
+        {status === "copying"
+          ? "Copying…"
+          : status === "copied"
+            ? "Copied!"
+            : "Copy prompt"}
       </Button>
       <p className="mt-3 text-xs text-muted-foreground" role="status">
-        {selected
-          ? "Press ⌘C on Mac or Ctrl+C on Windows/Linux, then paste into your coding assistant."
-          : "Selecting the prompt is free and makes no AI request. Your coding assistant’s own usage terms apply."}
+        {status === "copied"
+          ? "Prompt copied. Paste it into your coding assistant."
+          : status === "fallback"
+            ? "Your browser blocked copying. The prompt is selected: press ⌘C or Ctrl+C."
+            : "Copying is free and makes no AI request. Your coding assistant’s own usage terms apply."}
       </p>
     </details>
   );

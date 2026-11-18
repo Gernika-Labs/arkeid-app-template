@@ -1,11 +1,15 @@
 import { MockPlatform, UNIT } from "./mock-platform.js";
 import { setupPlaygroundTools } from "./tools.js";
+import { copyStarterPrompt } from "./starter-copy.js";
 
 setupPlaygroundTools();
 
 const byId = (id) => document.getElementById(id);
 const manifest = await (await fetch("/arcade.manifest.json")).json();
 const config = await (await fetch("/dev-config.json")).json();
+const discovery = await fetch("/discovery-prompt.json")
+  .then((response) => (response.ok ? response.json() : {}))
+  .catch(() => ({}));
 const platform = new MockPlatform({
   priceUnits: manifest.proposedPriceUnits,
   inputMaxCharacters: manifest.inputMaxCharacters,
@@ -64,7 +68,40 @@ window.addEventListener("message", (event) => {
     frame.contentWindow.postMessage({ type: "arkeid:init", channel }, "*");
     return;
   }
-  if (data.channel !== channel || data.type !== "arkeid:request") return;
+  if (data.channel !== channel) return;
+  if (data.type === "arkeid:copy-starter-prompt") {
+    void copyStarterPrompt(data, {
+      prompt: discovery.prompt,
+      userActive: navigator.userActivation?.isActive === true,
+      writeText: (text) => navigator.clipboard.writeText(text),
+    })
+      .then(() =>
+        frame.contentWindow.postMessage(
+          {
+            type: "arkeid:response",
+            channel,
+            id: data.id,
+            ok: true,
+            text: "copied",
+          },
+          "*",
+        ),
+      )
+      .catch((error) =>
+        frame.contentWindow.postMessage(
+          {
+            type: "arkeid:response",
+            channel,
+            id: data.id,
+            ok: false,
+            error: error.message,
+          },
+          "*",
+        ),
+      );
+    return;
+  }
+  if (data.type !== "arkeid:request") return;
   try {
     if (
       Object.keys(data).some(

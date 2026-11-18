@@ -68,6 +68,23 @@ async function awaitReady(): Promise<void> {
     if (timer) clearTimeout(timer);
   }
 }
+/** Local onboarding helper; the parent copies its fixed prompt, never app-provided text. */
+export async function copyDiscoveryPrompt(): Promise<void> {
+  await awaitReady();
+  const id = crypto.randomUUID();
+  await new Promise<GenerateResult>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error("Copy timed out"));
+    }, 8000);
+    pending.set(id, { resolve, reject, timer });
+    parent.postMessage(
+      { type: "arkeid:copy-starter-prompt", channel, id },
+      PLATFORM_ORIGIN,
+    );
+  });
+}
+
 export const arcade = Object.freeze({
   ready: awaitReady,
   ai: Object.freeze({

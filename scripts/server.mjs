@@ -25,6 +25,16 @@ export async function localResponse(role, path, origins) {
       headers: { ...headers, "Content-Type": "text/javascript" },
       body: `export const PLATFORM_ORIGIN = ${JSON.stringify(origins.platform)};`,
     };
+  if (role === "platform" && path === "/discovery-prompt.json") {
+    const body = await readFile(
+      join(ROOT, "src/content/project-discovery-prompt.json"),
+    ).catch(() => null);
+    return {
+      status: body ? 200 : 404,
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: body ?? JSON.stringify({ error: "Starter prompt unavailable" }),
+    };
+  }
   if (role === "platform" && path === "/dev-config.json")
     return {
       status: 200,
