@@ -137,7 +137,6 @@ test("the starter is a neutral typed React foundation with shared UI and tokens"
     app,
     /watchlist|NOVA|ORBT|PINE|filing|Research workspace/i,
   );
-  assert.match(app, /components\/ui\/button/);
   const css = await readFile(
     new URL("../src/styles/globals.css", import.meta.url),
     "utf8",

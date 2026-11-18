@@ -7,14 +7,13 @@ export function ProjectDiscovery() {
   const field = useRef<HTMLTextAreaElement>(null);
   const [selected, setSelected] = useState(false);
   return (
-    <details className="rounded-lg border p-5">
+    <details className="rounded-lg border p-4">
       <summary className="cursor-pointer text-sm font-medium">
-        Not sure where to start? Help me shape my app
+        Need a starting point? Copy the guided prompt.
       </summary>
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        Open this project in Claude Code or another AI coding assistant. Copy
-        the prompt below and paste it there to start a short questionnaire. It
-        helps you approve a project brief before any code is written.
+        Paste this prompt into your AI coding assistant to shape your idea
+        before writing code.
       </p>
       <label className="mt-4 block text-sm font-medium" htmlFor={id}>
         Project discovery prompt
